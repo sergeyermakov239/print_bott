@@ -1,3 +1,5 @@
+import os
+
 import telebot
 from telebot import types, custom_filters
 from members import is_member
@@ -5,7 +7,8 @@ import win32print
 import win32api
 
 bot=telebot.TeleBot('6159680530:AAHhyp72GrNF7fOfF7TBRn0RcM-8NGwvBhg')
-filename=''
+filenames={}
+queue=[]
 #creating a button
 
 # @bot.message_handler(commands = ['start'])
@@ -27,6 +30,10 @@ def start(message):
     markup.add(btn1)
     bot.send_message(message.chat.id, "👋 Привет! Я твой бот-помощник по всему, что связано с Новым Физтехом ИТМО! ", reply_markup=markup)
 
+@bot.message_handler(commands=['help'])
+def help(message):
+    bot.send_message(message.chat.id,"Привет! Я бот для печати на принтерах Нового Физтеха ИТМО, для того, чтобы начать работу со мной, введите команду /start")
+
 @bot.message_handler(chat_id=[1395787106] ,commands=['admin'])
 def admin_rep(message):
     bot.send_message(message.chat.id, 'You are admin!')
@@ -45,8 +52,8 @@ def print(message):
         try:
             file_info = bot.get_file(message.document.file_id)
             downloaded_file = bot.download_file(file_info.file_path)
-            global filename
-            filename = message.document.file_name
+            global filenames
+            filenames[message.chat.id] = message.document.file_name
             src = 'C:/Users/User/Desktop/python/print_bott/' + message.document.file_name
             with open(src, 'wb') as new_file:
                 new_file.write(downloaded_file)
@@ -61,7 +68,7 @@ def print(message):
 
     else:
         bot.send_message(message.chat.id, 'You are not allowed to print. To enter the New PhysTech community, you need to add your telegram id to your account on New PhysTech cite as it is done in the instruction below')
-        with open('C:/Users/User/Desktop/python/NewPhysTechBot/instruction.jpg', 'rb') as instr_pic_file:
+        with open('C:/Users/User/Desktop/python/print_bott/instruction.jpg', 'rb') as instr_pic_file:
             instruction_pic = instr_pic_file.read()
 
         bot.send_photo(message.chat.id, instruction_pic)
@@ -90,14 +97,27 @@ def get_text_messages(message):
             printdefaults = {"DesiredAccess": win32print.PRINTER_ALL_ACCESS}
             ## начинаем работу с принтером ("открываем" его)
             handle = win32print.OpenPrinter(name, printdefaults)
-            global filename
-            win32print.StartDocPrinter(handle, 1, [filename, None, "raw"])
+            global filenames
+            win32print.StartDocPrinter(handle, 1, [filenames[message.chat.id], None, "raw"])
 
-            win32api.ShellExecute(0, "print", filename, '/d:"%s"' % name, ".", 0)
+            win32api.ShellExecute(0, "print",filenames[message.chat.id], '/d:"%s"' % name, ".", 0)
 
             bot.send_message(message.chat.id,'Готово!')
         except Exception as e:
+            #global filenames
             bot.send_message(message.chat.id,(str)(e))
+        finally:
+            # src = 'C:/Users/User/Desktop/python/print_bot/' + filenames[message.chat.id]
+            # os.remove(src)
+            # filenames.pop(message.chat.id)
+            queue.append(filenames[message.chat.id])
+            if len(queue)>=3:
+                src = 'C:/Users/User/Desktop/python/print_bott/' + queue[0]
+                for key in filenames:
+                    if filenames[key]==queue[0]:
+                        filenames.pop(key)
+                os.remove(src)
+                queue.pop(0)
 
 
 bot.polling(none_stop=True, interval=0)
