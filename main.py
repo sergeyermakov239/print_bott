@@ -6,10 +6,14 @@ from members import is_member
 import win32print
 import win32api
 from PIL import Image
+from filenames import Filenames
+from queue1 import Queue1
 
 bot=telebot.TeleBot('6159680530:AAHhyp72GrNF7fOfF7TBRn0RcM-8NGwvBhg')
-filenames={}
-queue=[]
+# filenames={}
+# queue=[]
+filenames=Filenames()
+queue=Queue1()
 #creating a button
 
 # @bot.message_handler(commands = ['start'])
@@ -58,8 +62,9 @@ def print(message):
             file_type=strarray[-1]
             filename_without_type=strarray[0]
             if file_type=='pdf' or file_type=='docx' or file_type=='doc':
-                global filenames
-                filenames[message.chat.id] = message.document.file_name
+                # global filenames
+                # filenames[message.chat.id] = message.document.file_name
+                filenames.add(message.chat.id,message.document.filename)
             src = 'C:/Users/telegrambot/Desktop/Python/' + message.document.file_name
             with open(src, 'wb') as new_file:
                 new_file.write(downloaded_file)
@@ -78,7 +83,8 @@ def print(message):
                 im_1.save(fp=src1, mode="r")
                 pdffilename=filename_without_type+'.pdf'
                 #global filenames
-                filenames[message.chat.id] = pdffilename
+                #filenames[message.chat.id] = pdffilename
+                filenames.add(message.chat.id,pdffilename)
                 os.remove(src)
         except Exception as e:
             bot.reply_to(message, (str)(e))
@@ -111,8 +117,9 @@ def print_photo(message):
             stringarray1=filename.split('.')
             str1='C:/Users/telegrambot/Desktop/Python/'+stringarray1[0]+'.pdf'
             pdffilename=stringarray1[0]+'.pdf'
-            global filenames
-            filenames[message.chat.id]=pdffilename
+            #global filenames
+            #filenames[message.chat.id]=pdffilename
+            filenames.add(message.chat.id,pdffilename)
             #bot.send_message(message.chat.id, str1)
             im_1.save(fp=str1,mode="r")
             os.remove(src)
@@ -175,10 +182,10 @@ def get_text_messages(message):
             printdefaults = {"DesiredAccess": win32print.PRINTER_ALL_ACCESS}
             ## начинаем работу с принтером ("открываем" его)
             handle = win32print.OpenPrinter(name, printdefaults)
-            global filenames
-            win32print.StartDocPrinter(handle, 1, [filenames[message.chat.id], None, "raw"])
+            #global filenames
+            win32print.StartDocPrinter(handle, 1, [filenames.get(message.chat.id), None, "raw"])
 
-            win32api.ShellExecute(0, "print",filenames[message.chat.id], '/d:"%s"' % name, ".", 0)
+            win32api.ShellExecute(0, "print",filenames.get(message.chat.id), '/d:"%s"' % name, ".", 0)
 
             bot.send_message(message.chat.id,'Готово!')
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)  # создание новых кнопок
@@ -191,20 +198,21 @@ def get_text_messages(message):
             # src = 'C:/Users/User/Desktop/python/print_bot/' + filenames[message.chat.id]
             # os.remove(src)
             # filenames.pop(message.chat.id)
-            queue.append(filenames[message.chat.id])
-            if len(queue)>=5:
-                src = 'C:/Users/telegrambot/Desktop/Python/' + queue[0]
+            #queue.append(filenames.get(message.chat.id))
+            queue.add(filenames.get(message.chat.id))
+            if queue.len()>=5:
+                src = 'C:/Users/telegrambot/Desktop/Python/' + queue.get(0)
                 flag=False
                 key1=0
-                for key in filenames:
-                    if filenames[key]==queue[0]:
+                for key in filenames.get_dict():
+                    if filenames.get(key)==queue.get(0):
                         flag=True
                         key1=key
                 if flag:
                     filenames.pop(key1)
                     flag=False
                 os.remove(src)
-                queue.pop(0)
+                queue.pop()
     else:
         bot.send_message(message.chat.id,"Привет! Я бот для печати на принтерах Нового Физтеха ИТМО, для того, чтобы начать работу со мной, введите команду /start")
 
