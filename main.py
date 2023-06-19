@@ -8,6 +8,7 @@ import win32api
 from PIL import Image
 from filenames import Filenames
 from queue1 import Queue1
+import time
 
 bot=telebot.TeleBot('6159680530:AAHhyp72GrNF7fOfF7TBRn0RcM-8NGwvBhg')
 # filenames={}
@@ -64,8 +65,8 @@ def print(message):
             if file_type=='pdf' or file_type=='docx' or file_type=='doc':
                 # global filenames
                 # filenames[message.chat.id] = message.document.file_name
-                filenames.add(message.chat.id,message.document.filename)
-            src = 'C:/Users/telegrambot/Desktop/Python/' + message.document.file_name
+                filenames.add(message.chat.id,message.document.file_name)
+            src = 'C:/Users/telegrambot/Desktop/Python/files/' + message.document.file_name
             with open(src, 'wb') as new_file:
                 new_file.write(downloaded_file)
                 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)  # создание новых кнопок
@@ -76,10 +77,10 @@ def print(message):
                 bot.reply_to(message, "Щас всё распечатаем), выберите принтер, которым хотите воспользоваться",reply_markup=markup)
 
             if file_type=='png' or file_type=='jpg':
-                src='C:/Users/telegrambot/Desktop/Python/'+filename
+                src='C:/Users/telegrambot/Desktop/Python/files/'+filename
                 image_1 = Image.open(fp=src, mode="r")
                 im_1 = image_1.convert('RGB')
-                src1='C:/Users/telegrambot/Desktop/Python/'+filename_without_type+'.pdf'
+                src1='C:/Users/telegrambot/Desktop/Python/files/'+filename_without_type+'.pdf'
                 im_1.save(fp=src1, mode="r")
                 pdffilename=filename_without_type+'.pdf'
                 #global filenames
@@ -108,14 +109,14 @@ def print_photo(message):
             strarray=str1.split('/')
             filename=strarray[-1]
             #bot.send_message(message.chat.id,filename)
-            src = 'C:/Users/telegrambot/Desktop/Python/' + filename
+            src = 'C:/Users/telegrambot/Desktop/Python/files/' + filename
             with open(src, 'wb') as new_file:
                 new_file.write(downloaded_file)
             #bot.send_message(message.chat.id,openstr)
             image_1=Image.open(fp=src,mode="r")
             im_1 = image_1.convert('RGB')
             stringarray1=filename.split('.')
-            str1='C:/Users/telegrambot/Desktop/Python/'+stringarray1[0]+'.pdf'
+            str1='C:/Users/telegrambot/Desktop/Python/files/'+stringarray1[0]+'.pdf'
             pdffilename=stringarray1[0]+'.pdf'
             #global filenames
             #filenames[message.chat.id]=pdffilename
@@ -183,9 +184,9 @@ def get_text_messages(message):
             ## начинаем работу с принтером ("открываем" его)
             handle = win32print.OpenPrinter(name, printdefaults)
             #global filenames
-            win32print.StartDocPrinter(handle, 1, [filenames.get(message.chat.id), None, "raw"])
+            win32print.StartDocPrinter(handle, 1, [('C:/Users/telegrambot/Desktop/Python/files/'+filenames.get(message.chat.id)), None, "raw"])
 
-            win32api.ShellExecute(0, "print",filenames.get(message.chat.id), '/d:"%s"' % name, ".", 0)
+            win32api.ShellExecute(0, "print",('C:/Users/telegrambot/Desktop/Python/files/'+filenames.get(message.chat.id)), '/d:"%s"' % name, ".", 0)
 
             bot.send_message(message.chat.id,'Готово!')
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True)  # создание новых кнопок
@@ -199,20 +200,36 @@ def get_text_messages(message):
             # os.remove(src)
             # filenames.pop(message.chat.id)
             #queue.append(filenames.get(message.chat.id))
-            queue.add(filenames.get(message.chat.id))
-            if queue.len()>=5:
-                src = 'C:/Users/telegrambot/Desktop/Python/' + queue.get(0)
-                flag=False
-                key1=0
-                for key in filenames.get_dict():
-                    if filenames.get(key)==queue.get(0):
-                        flag=True
-                        key1=key
-                if flag:
-                    filenames.pop(key1)
-                    flag=False
-                os.remove(src)
-                queue.pop()
+            # queue.add(filenames.get(message.chat.id))
+            # if queue.len()>=5:
+            #     src = 'C:/Users/telegrambot/Desktop/Python/' + queue.get(0)
+            #     flag=False
+            #     key1=0
+            #     for key in filenames.get_dict():
+            #         if filenames.get(key)==queue.get(0):
+            #             flag=True
+            #             key1=key
+            #     if flag:
+            #         filenames.pop(key1)
+            #         flag=False
+            #     os.remove(src)
+            #     queue.pop()
+            list_of_files=os.listdir('C:/Users/telegrambot/Desktop/Python/files')
+            for filename in list_of_files:
+                delta_time=time.time()-os.stat('C:/Users/telegrambot/Desktop/Python/files/'+filename).st_mtime
+                if delta_time>200:
+                    os.remove('C:/Users/telegrambot/Desktop/Python/files/'+filename)
+                    #bot.send_message(message.chat.id,(str)(filenames.get_dict()))
+                    #bot.send_message(message.chat.id, (str)(filename))
+                    key0=0
+                    for key in filenames.get_dict():
+                        if filenames.get_dict()[key]==filename:
+                            key0=key
+                            #bot.send_message(message.chat.id,key)
+                            #print(key,filename,filenames.get(key))
+                    if key0!=0:
+                        #print(key0)
+                        filenames.pop(key0)
     else:
         bot.send_message(message.chat.id,"Привет! Я бот для печати на принтерах Нового Физтеха ИТМО, для того, чтобы начать работу со мной, введите команду /start")
 
