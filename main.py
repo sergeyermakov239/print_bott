@@ -154,6 +154,12 @@ def print_photo(message):
             # filenames[message.chat.id]=stringarray[0]+'.pdf'
         except Exception as e:
             bot.reply_to(message, (str)(e))
+    else:
+        bot.send_message(message.chat.id, 'You are not allowed to print. To enter the New PhysTech community, you need to add your telegram id to your account on New PhysTech cite as it is done in the instruction below')
+        with open('C:/Users/telegrambot/Desktop/Python/instruction.jpg', 'rb') as instr_pic_file:
+            instruction_pic = instr_pic_file.read()
+
+        bot.send_photo(message.chat.id, instruction_pic)
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
